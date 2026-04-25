@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-URL = "https://www.snapdeal.com/search?keyword=smartphones"
+BASE_URL = "https://www.snapdeal.com/search?keyword=smartphones&page={}"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -9,13 +9,10 @@ headers = {
 
 def fetch_page(url):
     response = requests.get(url, headers=headers)
-    print("Status Code:", response.status_code)
-    print("HTML Length:", len(response.text))
     return response.text
 
 def parse_html(html):
     soup = BeautifulSoup(html, "html.parser")
-
     products = soup.find_all("div", {"class": "product-tuple-listing"})
 
     data = []
@@ -33,14 +30,27 @@ def parse_html(html):
             }
             data.append(product)
 
-    print("Total products found:", len(products))
-    print("Parsed products:", len(data))
-
     return data
 
+def scrape_multiple_pages(pages=3):
+    all_data = []
+
+    for page in range(1, pages + 1):
+        print(f"Scraping page {page}...")
+        url = BASE_URL.format(page)
+
+        html = fetch_page(url)
+        data = parse_html(html)
+
+        all_data.extend(data)
+
+    return all_data
+
+
 if __name__ == "__main__":
-    html = fetch_page(URL)
-    products = parse_html(html)
+    products = scrape_multiple_pages(pages=3)
+
+    print("Total products scraped:", len(products))
 
     for p in products[:5]:
         print(p)
